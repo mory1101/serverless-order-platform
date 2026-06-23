@@ -28,7 +28,7 @@ app.serviceBusQueue('ProcessOrder', {
             await markOrderFailed(orderId, error.message, deliveryCount);
             context.log(`Order ${orderId} marked Failed`);
 
-            throw error;
+            
         }
     }
 });
