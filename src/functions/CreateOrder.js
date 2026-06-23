@@ -1,6 +1,7 @@
 const { app } = require('@azure/functions');
 const crypto = require('crypto');
 const { ServiceBusClient } = require('@azure/service-bus');
+const { insertPendingOrder } = require('../db');
 
 app.http('CreateOrder', {
     methods: ['POST'],
@@ -20,6 +21,10 @@ app.http('CreateOrder', {
             status: 'Pending',
             createdAt: new Date().toISOString()
         };
+
+        await insertPendingOrder(queueMessage);
+
+        context.log(`Order ${orderId} inserted into SQL as Pending`);
 
         const sbClient = new ServiceBusClient(
             process.env.ServiceBusConnection

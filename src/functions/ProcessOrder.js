@@ -1,23 +1,34 @@
 const { app } = require('@azure/functions');
+const { updateOrderStatus, markOrderFailed } = require('../db');
 
 app.serviceBusQueue('ProcessOrder', {
     connection: 'ServiceBusConnection',
     queueName: 'orders',
 
     handler: async (message, context) => {
-        context.log('=================================');
-        context.log(`Received Order: ${message.orderId}`);
-        context.log(`Customer: ${message.customerId}`);
-        context.log(`Status: ${message.status}`);
+        const orderId = message.orderId;
+        const deliveryCount = context.triggerMetadata.deliveryCount;
 
-        context.log('Marking order Processing');
-        throw new Error("Simulated processing failure");
+        try {
+            context.log(`Received Order: ${orderId}`);
+            context.log(`DeliveryCount: ${deliveryCount}`);
 
-        await new Promise(resolve =>
-            setTimeout(resolve, 5000)
-        );
+            await updateOrderStatus(orderId, 'Processing');
+            context.log(`Order ${orderId} marked Processing`);
 
-        context.log('Marking order Processed');
-        context.log('=================================');
+            // Simulated failure
+            throw new Error('Simulated processing failure');
+
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            await updateOrderStatus(orderId, 'Processed');
+            context.log(`Order ${orderId} marked Processed`);
+
+        } catch (error) {
+            await markOrderFailed(orderId, error.message, deliveryCount);
+            context.log(`Order ${orderId} marked Failed`);
+
+            throw error;
+        }
     }
 });

@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@azure/functions": "^4.16.1",
-    "@azure/service-bus": "^7.9.5"
+    "@azure/identity": "^4.13.1",
+    "@azure/service-bus": "^7.9.5",
+    "mssql": "^12.6.0"
   }
 }
