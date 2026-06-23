@@ -17,7 +17,7 @@ app.serviceBusQueue('ProcessOrder', {
             context.log(`Order ${orderId} marked Processing`);
 
             // Simulated failure
-            throw new Error('Simulated processing failure');
+            
 
             await new Promise(resolve => setTimeout(resolve, 5000));
 
