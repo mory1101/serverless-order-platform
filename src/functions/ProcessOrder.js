@@ -1,5 +1,6 @@
 const { app } = require('@azure/functions');
 const { updateOrderStatus, markOrderFailed } = require('../db');
+const { ServiceBusClient } = require('@azure/service-bus');
 
 app.serviceBusQueue('ProcessOrder', {
     connection: 'ServiceBusConnection',
