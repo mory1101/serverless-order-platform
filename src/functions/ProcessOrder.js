@@ -11,11 +11,21 @@ app.serviceBusQueue('ProcessOrder', {
         const deliveryCount = context.triggerMetadata.deliveryCount;
 
         try {
-            context.log(`Received Order: ${orderId}`);
-            context.log(`DeliveryCount: ${deliveryCount}`);
+            context.log(JSON.stringify({
+                eventType: "OrderReceivedFromQueue",
+                orderId: message.orderId,
+                customerId: message.customerId,
+                correlationId: message.correlationId,
+                deliveryCount: deliveryCount
+            }));
 
             await updateOrderStatus(orderId, 'Processing');
-            context.log(`Order ${orderId} marked Processing`);
+            context.log(JSON.stringify({
+                eventType: "OrderProcessingStartedByConsumerFunction",
+                orderId: message.orderId,
+                customerId: message.customerId,
+                correlationId: message.correlationId
+            }));
 
             // Simulated failure
             
@@ -23,7 +33,12 @@ app.serviceBusQueue('ProcessOrder', {
             await new Promise(resolve => setTimeout(resolve, 5000));
 
             await updateOrderStatus(orderId, 'Processed');
-            context.log(`Order ${orderId} marked Processed`);
+            context.log(JSON.stringify({
+                eventType: "OrderProcessedbyConsumerFunction",
+                orderId: message.orderId,
+                customerId: message.customerId,
+                correlationId: message.correlationId
+            }));
 
         } catch (error) {
             await markOrderFailed(orderId, error.message, deliveryCount);

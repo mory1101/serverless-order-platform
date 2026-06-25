@@ -13,6 +13,8 @@ app.http('CreateOrder', {
         const order = await request.json();
 
         const orderId = crypto.randomUUID();
+        const correlationId =
+         request.headers.get("x-correlation-id") || crypto.randomUUID();
 
         const queueMessage = {
             orderId,
@@ -20,12 +22,21 @@ app.http('CreateOrder', {
             productId: order.productId,
             quantity: order.quantity,
             status: 'Pending',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            correlationId: correlationId
         };
 
         await insertPendingOrder(queueMessage);
 
-        context.log(`Order ${orderId} inserted into SQL as Pending`);
+        context.log(JSON.stringify({
+            eventType: "OrderPendingInsertedDatabase",
+            orderId,
+            customerId: order.customerId,
+            productId: order.productId,
+            quantity: order.quantity,
+            status: "Pending",
+            correlationId: correlationId
+        }));
 
         const fullyQualifiedNamespace =
             process.env.ServiceBusConnection__fullyQualifiedNamespace;
@@ -44,15 +55,22 @@ app.http('CreateOrder', {
         await sender.close();
         await sbClient.close();
 
-        context.log('Message to be queued:', JSON.stringify(queueMessage));
+        context.log(JSON.stringify({
+            eventType: "OrderSentToQueueAndAwaitingProcessing",
+            orderId,
+            customerId: order.customerId,
+            queue: "orders",
+            correlationId: correlationId
+        }));
 
         return {
             status: 202,
             jsonBody: {
                 orderId: orderId,
                 status: 'Pending',
-                message: 'Order accepted for processing',
-                receivedOrder: order
+                message: 'Order sent to queue ,database and awaiting consumption processing',
+                receivedOrder: order,
+                correlationId: correlationId
             }
         };
     }

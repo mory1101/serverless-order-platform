@@ -28,6 +28,7 @@ async function insertPendingOrder(order) {
         .input('ProductId', sql.NVarChar(100), order.productId)
         .input('Quantity', sql.Int, order.quantity)
         .input('Status', sql.NVarChar(50), 'Pending')
+        .input('CorrelationId', sql.UniqueIdentifier, order.correlationId)
         .query(`
             INSERT INTO Orders (
                 OrderId,
@@ -36,7 +37,8 @@ async function insertPendingOrder(order) {
                 Quantity,
                 Status,
                 CreatedAt,
-                UpdatedAt
+                UpdatedAt,
+                CorrelationId
             )
             VALUES (
                 @OrderId,
@@ -45,7 +47,8 @@ async function insertPendingOrder(order) {
                 @Quantity,
                 @Status,
                 SYSUTCDATETIME(),
-                SYSUTCDATETIME()
+                SYSUTCDATETIME(),                
+                @CorrelationId
             );
         `);
 }
