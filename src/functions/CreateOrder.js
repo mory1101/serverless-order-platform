@@ -1,12 +1,11 @@
 const { app } = require('@azure/functions');
 const crypto = require('crypto');
-const { ServiceBusClient } = require('@azure/service-bus');
 const { insertPendingOrder } = require('../db');
-const { DefaultAzureCredential } = require('@azure/identity');
 
 app.http('CreateOrder', {
     methods: ['POST'],
     authLevel: 'anonymous',
+
     handler: async (request, context) => {
         context.log('CreateOrder function received a request.');
 
@@ -14,63 +13,51 @@ app.http('CreateOrder', {
 
         const orderId = crypto.randomUUID();
         const correlationId =
-         request.headers.get("x-correlation-id") || crypto.randomUUID();
+            request.headers.get("x-correlation-id") || crypto.randomUUID();
 
-        const queueMessage = {
+        const createdAt = new Date().toISOString();
+
+        const sqlAndOutboxMessage = {
             orderId,
             customerId: order.customerId,
             productId: order.productId,
             quantity: order.quantity,
             status: 'Pending',
-            createdAt: new Date().toISOString(),
-            correlationId: correlationId
+            createdAt,
+            correlationId,
+            
+
+            outboxMessageId: crypto.randomUUID(),
+            messageType: "ProcessOrder",
+            payload: {
+                orderId,
+                customerId: order.customerId,
+                productId: order.productId,
+                quantity: order.quantity,
+                correlationId
+            }
         };
 
-        await insertPendingOrder(queueMessage);
+        // Insert the order into the database and create an outbox message
+        await insertPendingOrder(sqlAndOutboxMessage);
 
         context.log(JSON.stringify({
-            eventType: "OrderPendingInsertedDatabase",
+            eventType: "OrderPendingInsertedAndOutboxMessageCreated",
             orderId,
             customerId: order.customerId,
             productId: order.productId,
             quantity: order.quantity,
             status: "Pending",
-            correlationId: correlationId
-        }));
-
-        const fullyQualifiedNamespace =
-            process.env.ServiceBusConnection__fullyQualifiedNamespace;
-
-         const sbClient = new ServiceBusClient(
-            fullyQualifiedNamespace,
-            new DefaultAzureCredential()
-        );
-
-        const sender = sbClient.createSender('orders');
-
-        await sender.sendMessages({
-            body: queueMessage
-        });
-
-        await sender.close();
-        await sbClient.close();
-
-        context.log(JSON.stringify({
-            eventType: "OrderSentToQueueAndAwaitingProcessing",
-            orderId,
-            customerId: order.customerId,
-            queue: "orders",
-            correlationId: correlationId
+            correlationId
         }));
 
         return {
             status: 202,
             jsonBody: {
-                orderId: orderId,
+                orderId,
                 status: 'Pending',
-                message: 'Order sent to queue ,database and awaiting consumption processing',
-                receivedOrder: order,
-                correlationId: correlationId
+                message: 'Order accepted and stored. Processing will be triggered by the outbox publisher.',
+                correlationId
             }
         };
     }
