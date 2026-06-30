@@ -199,13 +199,22 @@ async function markOutboxMessageFailed(id, error) {
         `);
 }
 
+async function checkSqlHealth() {
+    const db = await getPool();
+
+    await db.request().query(`
+        SELECT 1 AS HealthCheck;
+    `);
+}
+
 module.exports = {
     insertPendingOrder,
     updateOrderStatus,
     markOrderFailed,
     getPendingOutboxMessages,
     markOutboxMessagePublished,
-    markOutboxMessageFailed
+    markOutboxMessageFailed,
+    checkSqlHealth
 };
 
  
