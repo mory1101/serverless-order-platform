@@ -7,10 +7,12 @@ const {
 const { ServiceBusClient } = require("@azure/service-bus");
 const { DefaultAzureCredential } = require("@azure/identity");
 
-app.timer("OutboxPublisher", {
-  schedule: "*/30 * * * * *",
+app.http('OutboxPublisher', {
+    methods: ['GET'],
+    authLevel: 'anonymous',
+    route: 'admin/outbox/publish',
 
-  handler: async (timer, context) => {
+  handler: async (request, context) => {
     context.log("OutboxPublisher started.");
 
     const credential = new DefaultAzureCredential();
@@ -24,6 +26,7 @@ app.timer("OutboxPublisher", {
     const sender = serviceBusClient.createSender('orders');
 
     try {
+      
       const messages = await getPendingOutboxMessages();
 
       for (const message of messages) {
