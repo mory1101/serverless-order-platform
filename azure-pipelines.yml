@@ -57,4 +57,4 @@ steps:
 
   - publish: '$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip'
     artifact: 'drop'
-    displayName: 'Publish build artifact'
+    displayName: 'Publish build artifacts'
