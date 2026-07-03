@@ -7,11 +7,12 @@ pr:
   branches:
     include:
       - main
+
 variables:
   nodeVersion: '20.x'
   artifactName: 'serverless-order-platform'
 
-Stages:
+stages:
   - stage: Validate
     displayName: 'Validate and Build'
     jobs:
@@ -64,26 +65,25 @@ Stages:
             artifact: 'drop'
             displayName: 'Publish build artifact'
 
-
   - stage: Deploy_Development
-      displayName: 'Deploy to Development'
-      dependsOn: Validate
-      condition: succeeded()
-      jobs:
-        - deployment: DeployDevelopment
-          displayName: 'Deploy Function App to Development'
-          environment: 'Development'
-          strategy:
-            runOnce:
-              deploy:
-                steps:
-                  - download: current
-                    artifact: drop
+    displayName: 'Deploy to Development'
+    dependsOn: Validate
+    condition: succeeded()
+    jobs:
+      - deployment: DeployDevelopment
+        displayName: 'Deploy Function App to Development'
+        environment: 'Development'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: drop
 
-                  - task: AzureFunctionApp@2
-                      inputs:
-                        connectedServiceNameARM: 'Azure subscription 1(65f91310-4b43-4f79-8b80-53df1f58d691)'
-                        appType: 'functionApp'
-                        isFlexConsumption: true
-                        appName: 'mory-order-functions-2026'
-                        package: '$(Pipeline.Workspace)/**/*.zip'
+                - task: AzureFunctionApp@2
+                  inputs:
+                    connectedServiceNameARM: 'Azure subscription 1(65f91310-4b43-4f79-8b80-53df1f58d691)'
+                    appType: 'functionApp'
+                    isFlexConsumption: true
+                    appName: 'mory-order-functions-2026'
+                    package: '$(Pipeline.Workspace)/**/*.zip'
