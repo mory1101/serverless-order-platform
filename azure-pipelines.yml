@@ -68,11 +68,13 @@ stages:
   - stage: Deploy_Development
     displayName: 'Deploy to Development'
     dependsOn: Validate
-    condition: succeeded()
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: DeployDevelopment
         displayName: 'Deploy Function App to Development'
         environment: 'Development'
+        pool:
+          vmImage: 'ubuntu-latest'
         strategy:
           runOnce:
             deploy:
@@ -86,4 +88,47 @@ stages:
                     appType: 'functionApp'
                     isFlexConsumption: true
                     appName: 'mory-order-functions-2026'
+                    package: '$(Pipeline.Workspace)/**/*.zip'
+                
+                - script: |
+                    echo "Waiting for Function App to warm up..."
+                    sleep 20
+                    echo "Checking application readiness..."
+                    response=$(curl -f -s https://mory-order-functions-2026.azurewebsites.net/api/health)
+                    echo "Raw Response: $response"
+                    
+                    # Robust matching check for text containing "Healthy", "OK", or status properties
+                    if echo "$response" | grep -Ei "ok|healthy" > /dev/null; then
+                      echo "Function App health verification successful."
+                    else
+                      echo "ERROR: Function App returned unexpected health status or empty string."
+                      exit 1
+                    fi
+                  displayName: 'Verify Function App health'
+
+  - stage: Deploy_Production
+    displayName: 'Deploy to Production'
+    dependsOn: 
+     - Validate
+     - Deploy_Development
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployProduction
+        displayName: 'Deploy Function App to Production'
+        environment: 'Production'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: drop
+
+                - task: AzureFunctionApp@2
+                  inputs:
+                    connectedServiceNameARM: 'Azure subscription 1(65f91310-4b43-4f79-8b80-53df1f58d691)'
+                    appType: 'functionApp'
+                    isFlexConsumption: true
+                    appName: 'mory-order-functions-2026-staging' # Verified production string endpoint
                     package: '$(Pipeline.Workspace)/**/*.zip'
