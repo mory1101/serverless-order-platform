@@ -7,54 +7,83 @@ pr:
   branches:
     include:
       - main
-
-pool:
-  vmImage: 'ubuntu-latest'
-
 variables:
   nodeVersion: '20.x'
   artifactName: 'serverless-order-platform'
 
-steps:
-  - task: NodeTool@0
-    displayName: 'Use Node.js $(nodeVersion)'
-    inputs:
-      versionSpec: '$(nodeVersion)'
+Stages:
+  - stage: Validate
+    displayName: 'Validate and Build'
+    jobs:
+      - job: Build
+        displayName: 'Build and Test'
+        pool:
+          vmImage: 'ubuntu-latest'
 
-  - script: npm ci
-    displayName: 'Install dependencies'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Use Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: '$(nodeVersion)'
 
-  - script: npm test --if-present
-    displayName: 'Run tests'
+          - script: npm ci
+            displayName: 'Install dependencies'
 
-  - script: npm audit --audit-level=high
-    displayName: 'Run dependency security audit'
-    continueOnError: true
+          - script: npm test --if-present
+            displayName: 'Run tests'
 
-  - script: |
-      npm install -g azure-functions-core-tools@4 --unsafe-perm=true
-      func --version
-    displayName: 'Install Azure Functions Core Tools'
+          - script: npm audit --audit-level=high
+            displayName: 'Run dependency security audit'
+            continueOnError: true
 
-  - script: |
-      mkdir -p $(Build.ArtifactStagingDirectory)/app
-      rsync -av \
-        --exclude='.git' \
-        --exclude='node_modules' \
-        --exclude='.env' \
-        --exclude='local.settings.json' \
-        ./ $(Build.ArtifactStagingDirectory)/app
-    displayName: 'Prepare Function App package'
+          - script: |
+              npm install -g azure-functions-core-tools@4 --unsafe-perm=true
+              func --version
+            displayName: 'Install Azure Functions Core Tools'
 
-  - task: ArchiveFiles@2
-    displayName: 'Create deployment artifact'
-    inputs:
-      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/app'
-      includeRootFolder: false
-      archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip'
-      replaceExistingArchive: true
+          - script: |
+              mkdir -p $(Build.ArtifactStagingDirectory)/app
+              rsync -av \
+                --exclude='.git' \
+                --exclude='node_modules' \
+                --exclude='.env' \
+                --exclude='local.settings.json' \
+                ./ $(Build.ArtifactStagingDirectory)/app
+            displayName: 'Prepare Function App package'
 
-  - publish: '$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip'
-    artifact: 'drop'
-    displayName: 'Publish build artifacts'
+          - task: ArchiveFiles@2
+            displayName: 'Create deployment artifact'
+            inputs:
+              rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/app'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip'
+              replaceExistingArchive: true
+
+          - publish: '$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip'
+            artifact: 'drop'
+            displayName: 'Publish build artifact'
+
+
+  - stage: Deploy_Development
+      displayName: 'Deploy to Development'
+      dependsOn: Validate
+      condition: succeeded()
+      jobs:
+        - deployment: DeployDevelopment
+          displayName: 'Deploy Function App to Development'
+          environment: 'Development'
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - download: current
+                    artifact: drop
+
+                  - task: AzureFunctionApp@2
+                      inputs:
+                        connectedServiceNameARM: 'Azure subscription 1(65f91310-4b43-4f79-8b80-53df1f58d691)'
+                        appType: 'functionApp'
+                        isFlexConsumption: true
+                        appName: 'mory-order-functions-2026'
+                        package: '$(Pipeline.Workspace)/**/*.zip'
