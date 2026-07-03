@@ -55,10 +55,32 @@ stages:
               archiveType: 'zip'
               archiveFile: '$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip'
               replaceExistingArchive: true
+            
+          - script: |
+                  echo "Current directory:"
+                  pwd
+
+                  echo "Root files:"
+                  ls -la
+
+                  echo "Source tree:"
+                  find . -maxdepth 3 -type f | sort
+
+                  echo "Source tree:"
+                  find . -maxdepth 5  | sort
+
+                  echo "Function files:"
+                  find . -path "*src/functions*" -type f -print
+            displayName: "Debug folder structure before package"
 
           - publish: '$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip'
             artifact: 'drop'
             displayName: 'Publish build artifact'
+
+          - script: |
+              echo "Package contents:"
+              unzip -l "$(Build.ArtifactStagingDirectory)/functionapp.zip" | head -100
+            displayName: "Inspect function zip"
 
   - stage: Deploy_Development
     displayName: 'Deploy to Development'
