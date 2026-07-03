@@ -41,7 +41,6 @@ stages:
               mkdir -p $(Build.ArtifactStagingDirectory)/app
               rsync -av \
                 --exclude='.git' \
-                --exclude='node_modules' \
                 --exclude='.env' \
                 --exclude='local.settings.json' \
                 ./ $(Build.ArtifactStagingDirectory)/app
