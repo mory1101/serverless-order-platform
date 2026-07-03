@@ -38,6 +38,11 @@ stages:
             continueOnError: true
 
           - script: |
+              npm install -g azure-functions-core-tools@4 --unsafe-perm=true
+              func --version
+            displayName: 'Install Azure Functions Core Tools'
+
+          - script: |
               mkdir -p $(Build.ArtifactStagingDirectory)/app
               rsync -av \
                 --exclude='.git' \
