@@ -64,10 +64,7 @@ stages:
                   ls -la
 
                   echo "Source tree:"
-                  find . -maxdepth 3 -type f | sort
-
-                  echo "Source tree:"
-                  find . -maxdepth 5  | sort
+                  find . -maxdepth 3 -type f | sort                  
 
                   echo "Function files:"
                   find . -path "*src/functions*" -type f -print
