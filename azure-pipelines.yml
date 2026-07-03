@@ -79,7 +79,7 @@ stages:
 
           - script: |
               echo "Package contents:"
-              unzip -l "$(Build.ArtifactStagingDirectory)/functionapp.zip" | head -100
+              unzip -l "$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip" | head -100
             displayName: "Inspect function zip"
 
   - stage: Deploy_Development
