@@ -64,10 +64,7 @@ stages:
                   ls -la
 
                   echo "Source tree:"
-                  find . -maxdepth 3 -type f | sort
-
-                  echo "Source tree:"
-                  find . -maxdepth 5  | sort
+                  find . -maxdepth 3 -type f | sort                  
 
                   echo "Function files:"
                   find . -path "*src/functions*" -type f -print
@@ -79,7 +76,7 @@ stages:
 
           - script: |
               echo "Package contents:"
-              unzip -l "$(Build.ArtifactStagingDirectory)/functionapp.zip" | head -100
+              unzip -l "$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip" | head -100
             displayName: "Inspect function zip"
 
   - stage: Deploy_Development
