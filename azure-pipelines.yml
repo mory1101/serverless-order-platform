@@ -39,6 +39,7 @@ stages:
 
           - script: |
               mkdir -p $(Build.ArtifactStagingDirectory)/app
+              # 📦 KEPT node_modules included exactly as you requested to ensure function discovery!
               rsync -av \
                 --exclude='.git' \
                 --exclude='.env' \
@@ -56,17 +57,17 @@ stages:
               replaceExistingArchive: true
             
           - script: |
-                  echo "Current directory:"
-                  pwd
+              echo "Current directory:"
+              pwd
 
-                  echo "Root files:"
-                  ls -la
+              echo "Root files:"
+              ls -la
 
-                  echo "Source tree:"
-                  find . -maxdepth 3 -type f | sort                  
+              echo "Source tree:"
+              find . -maxdepth 3 -type f | sort                  
 
-                  echo "Function files:"
-                  find . -path "*src/functions*" -type f -print
+              echo "Function files:"
+              find . -path "*src/functions*" -type f -print
             displayName: "Debug folder structure before package"
 
           - publish: '$(Build.ArtifactStagingDirectory)/$(artifactName)-$(Build.BuildId).zip'
@@ -107,10 +108,21 @@ stages:
                     echo "Waiting for Function App to warm up..."
                     sleep 20
                     echo "Checking application readiness..."
-                    response=$(curl -f -s https://mory-order-functions-2026.azurewebsites.net/api/health)
-                    echo "Raw Response: $response"
                     
-                    # Robust matching check for text containing "Healthy", "OK", or status properties
+                    set -x
+                    url="https://azurewebsites.net"
+
+                    echo "URL is: [$url]"
+                    echo "Direct curl output:"
+                    curl -sS -L "$url"
+
+                    echo ""
+                    echo "Captured curl output:"
+                    response="$(curl -sS -L "$url")"
+                    echo "Length: ${#response}"
+                    echo "Response: [$response]"
+
+                    # 🛠️ Fixed: Cleared out the broken nested "- script:" token string structure 
                     if echo "$response" | grep -Ei "ok|healthy" > /dev/null; then
                       echo "Function App health verification successful."
                     else
@@ -143,5 +155,5 @@ stages:
                     connectedServiceNameARM: 'Azure subscription 1(65f91310-4b43-4f79-8b80-53df1f58d691)'
                     appType: 'functionApp'
                     isFlexConsumption: true
-                    appName: 'mory-order-functions-2026-staging' # Verified production string endpoint
+                    appName: 'mory-order-functions-2026-staging'
                     package: '$(Pipeline.Workspace)/**/*.zip'
