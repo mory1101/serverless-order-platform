@@ -1,15 +1,15 @@
-const { app, output } = require('@azure/functions');
-const { updateOrderStatus, markOrderFailed } = require('../db');
-const { ServiceBusClient } = require('@azure/service-bus');
+const { app, output } = require("@azure/functions");
+const { updateOrderStatus, markOrderFailed } = require("../db");
+const { ServiceBusClient } = require("@azure/service-bus");
 
 // Event Grid output binding
 const eventGridOutput = output.eventGrid({
-    connection: 'myawesometopic'
+    connection: "myawesometopic"
 });
 
-app.serviceBusQueue('ProcessOrder', {
-    connection: 'ServiceBusConnection',
-    queueName: 'orders',
+app.serviceBusQueue("ProcessOrder", {
+    connection: "ServiceBusConnection",
+    queueName: "orders",
 
     // Register the output binding
     extraOutputs: [eventGridOutput],
@@ -27,7 +27,7 @@ app.serviceBusQueue('ProcessOrder', {
                 deliveryCount: deliveryCount
             }));
 
-            await updateOrderStatus(orderId, 'Processing');
+            await updateOrderStatus(orderId, "Processing");
 
             context.log(JSON.stringify({
                 eventType: "OrderProcessingStartedByConsumerFunction",
@@ -39,7 +39,7 @@ app.serviceBusQueue('ProcessOrder', {
             // Simulate work
             await new Promise(resolve => setTimeout(resolve, 5000));
 
-            await updateOrderStatus(orderId, 'Processed');
+            await updateOrderStatus(orderId, "Processed");
 
             context.log(JSON.stringify({
                 eventType: "OrderProcessedByConsumerFunction",
