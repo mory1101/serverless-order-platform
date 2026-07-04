@@ -1,4 +1,4 @@
-const sql = require('mssql');
+const sql = require("mssql");
 
 let pool;
 
@@ -12,7 +12,7 @@ async function getPool() {
             encrypt: true
         },
         authentication: {
-            type: 'azure-active-directory-default'
+            type: "azure-active-directory-default"
         }
     });
 
@@ -29,12 +29,12 @@ async function insertPendingOrder(order) {
         const orderRequest = new sql.Request(dbTransaction);
 
         await orderRequest
-            .input('OrderId', sql.UniqueIdentifier, order.orderId)
-            .input('CustomerId', sql.NVarChar(100), order.customerId)
-            .input('ProductId', sql.NVarChar(100), order.productId)
-            .input('Quantity', sql.Int, order.quantity)
-            .input('Status', sql.NVarChar(50), 'Pending')
-            .input('CorrelationId', sql.UniqueIdentifier, order.correlationId)
+            .input("OrderId", sql.UniqueIdentifier, order.orderId)
+            .input("CustomerId", sql.NVarChar(100), order.customerId)
+            .input("ProductId", sql.NVarChar(100), order.productId)
+            .input("Quantity", sql.Int, order.quantity)
+            .input("Status", sql.NVarChar(50), "Pending")
+            .input("CorrelationId", sql.UniqueIdentifier, order.correlationId)
             .query(`
                 INSERT INTO Orders (
                     OrderId,
@@ -61,10 +61,10 @@ async function insertPendingOrder(order) {
         const outboxRequest = new sql.Request(dbTransaction);
 
         await outboxRequest
-            .input('Id', sql.UniqueIdentifier, order.outboxMessageId)
-            .input('MessageType', sql.NVarChar(100), order.messageType)
-            .input('Payload', sql.NVarChar(sql.MAX), JSON.stringify(order.payload))
-            .input('CorrelationId', sql.UniqueIdentifier, order.correlationId)
+            .input("Id", sql.UniqueIdentifier, order.outboxMessageId)
+            .input("MessageType", sql.NVarChar(100), order.messageType)
+            .input("Payload", sql.NVarChar(sql.MAX), JSON.stringify(order.payload))
+            .input("CorrelationId", sql.UniqueIdentifier, order.correlationId)
             .query(`
                 INSERT INTO OutboxMessages (
                     Id,
@@ -90,7 +90,7 @@ async function insertPendingOrder(order) {
         try {
             await dbTransaction.rollback();
         } catch (rollbackError) {
-            console.error('Rollback failed:', rollbackError);
+            console.error("Rollback failed:", rollbackError);
         }
 
         throw error;
@@ -102,17 +102,17 @@ async function updateOrderStatus(orderId, status) {
     const db = await getPool();
 
     const timestampColumn =
-        status === 'Processing' ? 'ProcessingStartedAt' :
-        status === 'Processed' ? 'ProcessedAt' :
-        null;
+        status === "Processing" ? "ProcessingStartedAt" :
+            status === "Processed" ? "ProcessedAt" :
+                null;
 
     const timestampUpdate = timestampColumn
         ? `, ${timestampColumn} = SYSUTCDATETIME()`
-        : '';
+        : "";
 
     await db.request()
-        .input('OrderId', sql.UniqueIdentifier, orderId)
-        .input('Status', sql.NVarChar(50), status)
+        .input("OrderId", sql.UniqueIdentifier, orderId)
+        .input("Status", sql.NVarChar(50), status)
         .query(`
             UPDATE Orders
             SET
@@ -127,9 +127,9 @@ async function markOrderFailed(orderId, failureReason, retryCount) {
     const db = await getPool();
 
     await db.request()
-        .input('OrderId', sql.UniqueIdentifier, orderId)
-        .input('FailureReason', sql.NVarChar(1000), failureReason)
-        .input('RetryCount', sql.Int, retryCount)
+        .input("OrderId", sql.UniqueIdentifier, orderId)
+        .input("FailureReason", sql.NVarChar(1000), failureReason)
+        .input("RetryCount", sql.Int, retryCount)
         .query(`
             UPDATE Orders
             SET
@@ -169,7 +169,7 @@ async function markOutboxMessagePublished(id) {
     const db = await getPool();
 
     await db.request()
-        .input('Id', sql.UniqueIdentifier, id)
+        .input("Id", sql.UniqueIdentifier, id)
         .query(`
             UPDATE OutboxMessages
             SET
@@ -184,8 +184,8 @@ async function markOutboxMessageFailed(id, error) {
     const db = await getPool();
 
     await db.request()
-        .input('Id', sql.UniqueIdentifier, id)
-        .input('LastError', sql.NVarChar(sql.MAX), error.message || String(error))
+        .input("Id", sql.UniqueIdentifier, id)
+        .input("LastError", sql.NVarChar(sql.MAX), error.message || String(error))
         .query(`
             UPDATE OutboxMessages
             SET

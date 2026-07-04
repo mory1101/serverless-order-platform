@@ -1,8 +1,8 @@
-const { app } = require('@azure/functions');
+const { app } = require("@azure/functions");
 
-app.eventGrid('SendEmail', {
+app.eventGrid("SendEmail", {
     handler: (event, context) => {
-        context.log('Event grid function processed event:', event);
+        context.log("Event grid function processed event:", event);
 
         
     }

@@ -1,13 +1,13 @@
-const { app } = require('@azure/functions');
-const crypto = require('crypto');
-const { insertPendingOrder } = require('../db');
+const { app } = require("@azure/functions");
+const crypto = require("crypto");
+const { insertPendingOrder } = require("../db");
 
-app.http('CreateOrder', {
-    methods: ['POST'],
-    authLevel: 'anonymous',
+app.http("CreateOrder", {
+    methods: ["POST"],
+    authLevel: "anonymous",
 
     handler: async (request, context) => {
-        context.log('CreateOrder function received a request.');
+        context.log("CreateOrder function received a request.");
 
         const order = await request.json();
 
@@ -22,7 +22,7 @@ app.http('CreateOrder', {
             customerId: order.customerId,
             productId: order.productId,
             quantity: order.quantity,
-            status: 'Pending',
+            status: "Pending",
             createdAt,
             correlationId,
             
@@ -55,8 +55,8 @@ app.http('CreateOrder', {
             status: 202,
             jsonBody: {
                 orderId,
-                status: 'Pending',
-                message: 'Order accepted and stored. Processing will be triggered by the outbox publisher.',
+                status: "Pending",
+                message: "Order accepted and stored. Processing will be triggered by the outbox publisher.",
                 correlationId
             }
         };

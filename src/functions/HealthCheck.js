@@ -1,29 +1,29 @@
-const { app } = require('@azure/functions');
-const { checkSqlHealth } = require('../db');
-const { ServiceBusClient } = require('@azure/service-bus');
-const { DefaultAzureCredential } = require('@azure/identity');
+const { app } = require("@azure/functions");
+const { checkSqlHealth } = require("../db");
+const { ServiceBusClient } = require("@azure/service-bus");
+const { DefaultAzureCredential } = require("@azure/identity");
 
-app.http('HealthCheck', {
-    methods: ['GET'],
-    authLevel: 'anonymous',
-    route: 'health',
+app.http("HealthCheck", {
+    methods: ["GET"],
+    authLevel: "anonymous",
+    route: "health",
 
     handler: async (request, context) => {
         const checks = {
-            app: 'Healthy',
-            sql: 'Unknown',
-            serviceBus: 'Unknown',
-            eventGridConfig: 'Unknown'
+            app: "Healthy",
+            sql: "Unknown",
+            serviceBus: "Unknown",
+            eventGridConfig: "Unknown"
         };
 
-        let overallStatus = 'Healthy';
+        let overallStatus = "Healthy";
 
         try {
             await checkSqlHealth();
-            checks.sql = 'Healthy';
+            checks.sql = "Healthy";
         } catch (error) {
-            checks.sql = 'Unhealthy';
-            overallStatus = 'Unhealthy';
+            checks.sql = "Unhealthy";
+            overallStatus = "Unhealthy";
         }
 
         let serviceBusClient;
@@ -33,7 +33,7 @@ app.http('HealthCheck', {
             const namespace = process.env.ServiceBusConnection__fullyQualifiedNamespace;
 
             if (!namespace) {
-                throw new Error('Missing ServiceBusConnection__fullyQualifiedNamespace');
+                throw new Error("Missing ServiceBusConnection__fullyQualifiedNamespace");
             }
 
             serviceBusClient = new ServiceBusClient(
@@ -41,14 +41,14 @@ app.http('HealthCheck', {
                 new DefaultAzureCredential()
             );
 
-            receiver = serviceBusClient.createReceiver('orders');
+            receiver = serviceBusClient.createReceiver("orders");
 
             await receiver.peekMessages(1);
 
-            checks.serviceBus = 'Healthy';
+            checks.serviceBus = "Healthy";
         } catch (error) {
-            checks.serviceBus = 'Unhealthy';
-            overallStatus = 'Unhealthy';
+            checks.serviceBus = "Unhealthy";
+            overallStatus = "Unhealthy";
             context.log(`Service Bus health check failed: ${error.message}`);
         } finally {
             if (receiver) {
@@ -62,15 +62,15 @@ app.http('HealthCheck', {
 
         checks.eventGridConfig =
             process.env.myawesometopic__topicEndpointUri
-                ? 'Healthy'
-                : 'Unhealthy';
+                ? "Healthy"
+                : "Unhealthy";
 
-        if (checks.eventGridConfig === 'Unhealthy') {
-            overallStatus = 'Unhealthy';
+        if (checks.eventGridConfig === "Unhealthy") {
+            overallStatus = "Unhealthy";
         }
 
         return {
-            status: overallStatus === 'Healthy' ? 200 : 503,
+            status: overallStatus === "Healthy" ? 200 : 503,
             jsonBody: {
                 status: overallStatus,
                 timestamp: new Date().toISOString(),
