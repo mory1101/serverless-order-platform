@@ -10,7 +10,7 @@ const { DefaultAzureCredential } = require("@azure/identity");
 app.http("OutboxPublisher", {
     methods: ["GET"],
     authLevel: "anonymous",
-    route: "admin/outbox/publish",
+    route: "publish",
 
     handler: async (request, context) => {
         context.log("OutboxPublisher started.");

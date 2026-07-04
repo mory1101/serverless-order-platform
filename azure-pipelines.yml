@@ -158,5 +158,5 @@ stages:
                     connectedServiceNameARM: 'Azure subscription 1(65f91310-4b43-4f79-8b80-53df1f58d691)'
                     appType: 'functionApp'
                     isFlexConsumption: true
-                    appName: 'mory-order-functions-2026-staging'
+                    appName: 'mory-order-functions-2026-prod'
                     package: '$(Pipeline.Workspace)/**/*.zip'
