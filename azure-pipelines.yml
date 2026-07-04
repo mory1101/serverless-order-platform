@@ -113,7 +113,7 @@ stages:
                     echo "Checking application readiness..."
                     
                     set -x
-                    url="https://azurewebsites.net"
+                    url="https://mory-order-functions-2026.azurewebsites.net/api/health"
 
                     echo "URL is: [$url]"
                     echo "Direct curl output:"
