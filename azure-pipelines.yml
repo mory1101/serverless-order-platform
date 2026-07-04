@@ -160,6 +160,6 @@ stages:
                     isFlexConsumption: true
                     appName: 'mory-order-functions-2026'
                     deployToSlotOrASE: true
-                    resourceGroupName: 'serverless-order-platform-rg'
+                    resourceGroupName: 'serverless-order-rg'
                     slotName: 'prod'
                     package: '$(Pipeline.Workspace)/**/*.zip'
